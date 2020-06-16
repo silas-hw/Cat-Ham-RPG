@@ -1,0 +1,8 @@
+ideas:
+Weakness potion - attacks do 1.5x damage for 2 turns
+poison potion - does -10 to -20 damage every turn
+posion cure -  cures poison
+lighter fule - lights weapon on fire for 5 turns, does x1.3 damage
+
+water type enemy (could be named different) - immune to fire attacks
+fire type enemy - inflicts fire damage but is more suspectable to explosive attacks (does more damage from fire)
