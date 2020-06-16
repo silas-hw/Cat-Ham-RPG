@@ -24,7 +24,8 @@ enemy_lvl1 = {
     "hp": 100,
     "attack":10,
     "defense":10,
-    "coin drop":5
+    "coin drop":5,
+    "can stop poison":False
 }
 
 enemy_lvl2 = {
@@ -32,12 +33,23 @@ enemy_lvl2 = {
     "hp": 130,
     "attack":70,
     "defense":40,
-    "coin drop":15
+    "coin drop":15,
+    "can stop poison":True
+
 }
 
 
 with open("player_stats.txt", "r") as f:
     player_stats = eval(f.read())
+
+def writeTo_player_stats():
+    global player_stats
+
+    with open("player_stats.txt", "w") as f:
+        f.write("{\n")
+        for key in player_stats:
+            f.write(f"'{key}':{player_stats[key]},\n")
+        f.write("}")
 
 client = commands.Bot(command_prefix = '::')
 fight_occuring = False
@@ -49,7 +61,6 @@ red is for enemy actions
 green is for info
 purple is for shop
 '''
-
 #creates embeds with give colours, text argument is the text to be in the embed
 def create_embed_blue(text):
     embed = discord.Embed(
@@ -166,11 +177,7 @@ async def set_legend(ctx, legend="none"):
         set_options[legend]()
         await ctx.send(embed=player_embed)
         
-        with open("player_stats.txt", "w") as f:
-            f.write("{\n")
-            for key in player_stats:
-                f.write(f"'{key}':{player_stats[key]},\n")
-            f.write("}")
+        writeTo_player_stats() #calls function to write to player_stats.txt
 
     #if user did not provide a legend
     else:
@@ -181,7 +188,7 @@ async def set_legend(ctx, legend="none"):
 #fight command
 @client.command()
 async def fight(ctx, type="basic"):
-    global enemy_hp, enemy_attack, enemy_defense, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison, fight_occuring, m_author, enemy_name, enemy_coinDrop, enemy_poisoned
+    global enemy_hp, enemy_attack, enemy_defense,enemy_CanStopPoison, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison, fight_occuring, m_author, enemy_name, enemy_coinDrop, enemy_poisoned
     
     try:
         m_author = ctx.message.author.name
@@ -201,6 +208,7 @@ async def fight(ctx, type="basic"):
             enemy_attack = enemy["attack"]
             enemy_defense = enemy["defense"]
             enemy_coinDrop = enemy["coin drop"]
+            enemy_CanStopPoison = enemy["can stop poison"]
             enemy_poisoned = False
 
             start_hp = player_stats[str(m_author)]["hp"]
@@ -223,7 +231,7 @@ async def fight(ctx, type="basic"):
 
 @client.event
 async def on_message(message):
-    global enemy_hp, enemy_attack, enemy_defense, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison, fight_occuring, m_author, enemy_name, enemy_poisoned, shop_inUse, enemy_coinDrop
+    global enemy_hp, enemy_attack, enemy_defense,enemy_CanStopPoison, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison, fight_occuring, m_author, enemy_name, enemy_poisoned, shop_inUse, enemy_coinDrop
     channel = message.channel
 
     #only takes messages if a user has actived the fight command
@@ -270,12 +278,6 @@ async def on_message(message):
                     #informs the user what has happened
                     fight_info = create_embed_blue(f"You healed for 40 hp, you are now on {player_hp} hp and have {player_potions} potions left")
                     await channel.send(embed=fight_info)
-
-                    if enemy_poisoned:
-                        poisonDamage = random.randint(10, 20)
-                        enemy_hp -= poisonDamage
-                        poisonEmbed = create_embed_blue(f"Poisoned {enemy_name} and dealt {poisonDamage} damage\nThe enemy is now on {enemy_hp}")
-                        await channel.send(embed=poisonEmbed)
                         
                     #enemy attacks
                     if enemy_hp > 0:   
@@ -289,20 +291,49 @@ async def on_message(message):
                     fight_info = create_embed_blue("You don't have any potions left")
                     await channel.send(embed=fight_info)
 
+            #if enemy is poisoned, deal poison damage and inform user
+            if enemy_poisoned and message.content != "help": #message.content != "help" stops poison damage from happening if the player types help (doesn't count as a move)
+                if enemy_CanStopPoison and random.randint(1,10) == 2:
+                    enemy_poisoned = False
+                    infoEmbed = create_embed_red("Enemy has cured poison!")
+                else:
+                    poisonDamage = random.randint(10, 20)
+                    enemy_hp -= poisonDamage
+                    poisonEmbed = create_embed_blue(f"Poisoned {enemy_name} and dealt {poisonDamage} damage\nThe enemy is now on {enemy_hp}")
+                    await channel.send(embed=poisonEmbed)
+
+            #if user chooses to poison enemy
             elif message.content == "poison":
-                enemy_poisoned = True
-                poisonDamage = random.randint(10, 20)
-                enemy_hp -= poisonDamage
-                poisonEmbed = create_embed_blue(f"Poisoned {enemy_name} and dealt {poisonDamage} damage\nThe enemy is now on {enemy_hp}")
-                await channel.send(embed=poisonEmbed)
-            
+                
+                #chekcs if enemy is already poisoned
+                if enemy_poisoned:
+                    #informs user and skips enemy attack
+                    infoEmbed = create_embed_blue("The enemy is already poisoned") 
+                    await channel.send(embed=infoEmbed)
+                else:
+                    #poisons enemy and takes damage
+                    enemy_poisoned = True
+                    poisonDamage = random.randint(10, 20) #damage is a random number between 10 and 20
+                    enemy_hp -= poisonDamage
+                    player_poison -= 1
+                    poisonEmbed = create_embed_blue(f"Poisoned {enemy_name} and dealt {poisonDamage} damage\nThe enemy is now on {enemy_hp}")
+                    await channel.send(embed=poisonEmbed)
+
+                    #enemy attack
+                    if enemy_hp > 0:   
+                        damage = random.randint(enemy_attack/2, enemy_attack)
+                        player_hp -= damage
+
+                        fight_info = create_embed_red(f"The {enemy_name} attacked and dealt {damage} damage, you are now on {player_hp} hp")
+                        await channel.send(embed=fight_info)
+
             #if user types help                        
             elif message.content == "help":
                 fight_info = create_embed_green("potions provide +40 hp\nattack damages the enemy and removes some hp\nafter your attack the enemy gets a chance to attack you")
                 await channel.send(embed=fight_info)
 
             #if the enemy is defeated
-            if enemy_hp >= 0:
+            if enemy_hp <= 0:
                 #sends the player information
                 fight_end = create_embed_blue(f"Well done! You defeated a {enemy_name}!\nYou gained 10xp and {enemy_coinDrop} coins")
                 await channel.send(embed=fight_end)
@@ -323,7 +354,7 @@ async def on_message(message):
                 fight_occuring = False
             
             #if the player is defeated
-            if player_hp >= 0:
+            if player_hp <= 0:
                 fight_end = create_embed_red(f"You lost to a {enemy_name}.")
                 await channel.send(embed=fight_end)
                 fight_occuring = False
@@ -331,11 +362,7 @@ async def on_message(message):
             #writing to file
             player_stats[str(m_author)]["health potions"] = player_potions
             player_stats[str(m_author)]["poison potions"] = player_poison
-            with open("player_stats.txt", "w") as f:
-                f.write("{\n")
-                for key in player_stats:
-                    f.write(f"'{key}':{player_stats[key]},\n")
-                f.write("}")
+            writeTo_player_stats()
     
     #only takes messages if a user has typed the shop command
     elif shop_inUse == True:
@@ -377,11 +404,7 @@ async def on_message(message):
                 await channel.send(embed=infoEmbed)
 
             player_stats[str(m_author)]["coins"] = player_coins
-            with open("player_stats.txt", "w") as f:
-                f.write("{\n")
-                for key in player_stats:
-                    f.write(f"'{key}':{player_stats[key]},\n")
-                f.write("}")
+            writeTo_player_stats()
 
 
 
@@ -401,6 +424,7 @@ async def shop(ctx):
 
     #goes to the on_message event, allows user to reply and for the code to answer
     shop_inUse = True
+
 @client.command(aliases=["stat", "info", "player"])
 async def stats(ctx):
     m_author = ctx.message.author.name
