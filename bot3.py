@@ -240,6 +240,12 @@ async def on_message(message):
                 fight_info = create_embed_blue(f"You attacked the {enemy_name} and dealt {damage} damage\nthe enemy is now on {enemy_hp} health")                   
                 await channel.send(embed=fight_info)
 
+                if enemy_poisoned:
+                    poisonDamage = random.randint(10, 20)
+                    enemy_hp -= poisonDamage
+                    poisonEmbed = create_embed_blue(f"Poisoned {enemy_name} and dealt {poisonDamage} damage\nThe enemy is now on {enemy_hp}")
+                    await channel.send(embed=poisonEmbed)
+
                 #enemies attack
                 #checks if enemy can attack, if the enemies hp is lower than 0 they would be dead
                 if enemy_hp > 0:
@@ -265,6 +271,12 @@ async def on_message(message):
                     fight_info = create_embed_blue(f"You healed for 40 hp, you are now on {player_hp} hp and have {player_potions} potions left")
                     await channel.send(embed=fight_info)
 
+                    if enemy_poisoned:
+                        poisonDamage = random.randint(10, 20)
+                        enemy_hp -= poisonDamage
+                        poisonEmbed = create_embed_blue(f"Poisoned {enemy_name} and dealt {poisonDamage} damage\nThe enemy is now on {enemy_hp}")
+                        await channel.send(embed=poisonEmbed)
+                        
                     #enemy attacks
                     if enemy_hp > 0:   
                         damage = random.randint(enemy_attack/2, enemy_attack)
@@ -276,7 +288,14 @@ async def on_message(message):
                 else:
                     fight_info = create_embed_blue("You don't have any potions left")
                     await channel.send(embed=fight_info)
- 
+
+            elif message.content == "poison":
+                enemy_poisoned = True
+                poisonDamage = random.randint(10, 20)
+                enemy_hp -= poisonDamage
+                poisonEmbed = create_embed_blue(f"Poisoned {enemy_name} and dealt {poisonDamage} damage\nThe enemy is now on {enemy_hp}")
+                await channel.send(embed=poisonEmbed)
+            
             #if user types help                        
             elif message.content == "help":
                 fight_info = create_embed_green("potions provide +40 hp\nattack damages the enemy and removes some hp\nafter your attack the enemy gets a chance to attack you")
