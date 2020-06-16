@@ -88,7 +88,7 @@ def level_up_check(xp):
     elif xp >= 300:
         return 8 
     elif xp >= 220:
-        return 7 
+        return 7
     elif xp >= 150:
         return 6 
     elif xp >= 90:
@@ -181,7 +181,7 @@ async def set_legend(ctx, legend="none"):
 #fight command
 @client.command()
 async def fight(ctx, type="basic"):
-    global enemy_hp, enemy_attack, enemy_defense, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison, fight_occuring, m_author, enemy_name, enemy_coinDrop
+    global enemy_hp, enemy_attack, enemy_defense, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison, fight_occuring, m_author, enemy_name, enemy_coinDrop, enemy_poisoned
     
     try:
         m_author = ctx.message.author.name
@@ -201,6 +201,7 @@ async def fight(ctx, type="basic"):
             enemy_attack = enemy["attack"]
             enemy_defense = enemy["defense"]
             enemy_coinDrop = enemy["coin drop"]
+            enemy_poisoned = False
 
             start_hp = player_stats[str(m_author)]["hp"]
             player_hp = player_stats[str(m_author)]["hp"]
@@ -222,7 +223,7 @@ async def fight(ctx, type="basic"):
 
 @client.event
 async def on_message(message):
-    global enemy_hp, enemy_attack, enemy_defense, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison, fight_occuring, m_author, enemy_name, shop_inUse, enemy_coinDrop
+    global enemy_hp, enemy_attack, enemy_defense, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison, fight_occuring, m_author, enemy_name, enemy_poisoned, shop_inUse, enemy_coinDrop
     channel = message.channel
 
     #only takes messages if a user has actived the fight command
@@ -272,10 +273,10 @@ async def on_message(message):
                         fight_info = create_embed_red(f"The {enemy_name} attacked and dealt {damage} damage, you are now on {player_hp} hp")
                         await channel.send(embed=fight_info)
                     
-                    else:
-                        fight_info = create_embed_blue("You don't have any potions left")
-                        await channel.send(embed=fight_info)
-
+                else:
+                    fight_info = create_embed_blue("You don't have any potions left")
+                    await channel.send(embed=fight_info)
+ 
             #if user types help                        
             elif message.content == "help":
                 fight_info = create_embed_green("potions provide +40 hp\nattack damages the enemy and removes some hp\nafter your attack the enemy gets a chance to attack you")
