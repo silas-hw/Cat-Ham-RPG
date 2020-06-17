@@ -232,14 +232,13 @@ async def fight(ctx, type="basic"):
         error_info = create_embed_green("You need to create a character first!\nDo this by typing ::set followed by a legend\nThere are three legends:\n1. Burrito Cat\n2. Polite Cat\n3.Fortnite Cat")
         await ctx.send(embed=error_info)
 
-def enemy_turn(channel):
+def enemy_turn():
     global enemy_hp, player_hp, enemy_name
     if enemy_hp > 0:   
         damage = random.randint(enemy_attack/2, enemy_attack)
         player_hp -= damage
 
-        fight_info = create_embed_red(f"The {enemy_name} attacked and dealt {damage} damage, you are now on {player_hp} hp")
-        await channel.send(embed=fight_info)
+        return create_embed_red(f"The {enemy_name} attacked and dealt {damage} damage, you are now on {player_hp} hp")
 
 @client.event
 async def on_message(message):
@@ -262,7 +261,8 @@ async def on_message(message):
                 await channel.send(embed=fight_info)
 
                 #enemies attack
-                enemy_turn(channel)
+                turn = enemy_turn()
+                await channel.send(embed=turn)
 
             #if the user typed potion
             elif message.content == "potion":
@@ -281,7 +281,8 @@ async def on_message(message):
                     await channel.send(embed=fight_info)
                         
                     #enemy attacks
-                    enemy_turn(channel)
+                    turn = enemy_turn()
+                    await channel.send(embed=turn)
                     
                 else:
                     fight_info = create_embed_blue("You don't have any potions left")
@@ -316,7 +317,8 @@ async def on_message(message):
                     await channel.send(embed=poisonEmbed)
 
                     #enemy attack
-                    enemy_turn(channel)
+                    turn = enemy_turn()
+                    await channel.send(embed=turn)
 
             #if user types help                        
             elif message.content == "help":
