@@ -233,7 +233,7 @@ async def fight(ctx, type="basic"):
         await ctx.send(embed=error_info)
 
 def enemy_turn():
-    global enemy_hp, player_hp, enemy_name
+    global enemy_hp, player_hp, enemy_name, enemy_attack
     if enemy_hp > 0:   
         damage = random.randint(enemy_attack/2, enemy_attack)
         player_hp -= damage
@@ -289,7 +289,7 @@ async def on_message(message):
                     await channel.send(embed=fight_info)
 
             #if enemy is poisoned, deal poison damage and inform user
-            if enemy_poisoned and message.content != "help": #message.content != "help" stops poison damage from happening if the player types help (doesn't count as a move)
+            if enemy_poisoned and player_hp > 0 and message.content != "help": #message.content != "help" stops poison damage from happening if the player types help (doesn't count as a move)
                 if enemy_CanStopPoison and random.randint(1,10) == 2:
                     enemy_poisoned = False
                     infoEmbed = create_embed_red("Enemy has cured poison!")
