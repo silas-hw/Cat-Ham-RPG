@@ -190,7 +190,7 @@ async def set_legend(ctx, legend="none"):
 #fight command
 @client.command()
 async def fight(ctx, type="basic"):
-    global enemy_hp, enemy_attack, enemy_defense,enemy_CanStopPoison, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison, fight_occuring, m_author, enemy_name, enemy_coinDrop, enemy_poisoned
+    global enemy_hp, enemy_attack, enemy_defense,enemy_CanStopPoison,enemy_CanPoisonPlayer, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison, fight_occuring, m_author, enemy_name, enemy_coinDrop, enemy_poisoned
     
     try:
         m_author = ctx.message.author.name
@@ -211,6 +211,7 @@ async def fight(ctx, type="basic"):
             enemy_defense = enemy["defense"]
             enemy_coinDrop = enemy["coin drop"]
             enemy_CanStopPoison = enemy["can stop poison"]
+            enemy_CanPoisonPlayer = enemy["can poison player"]
             enemy_poisoned = False
 
             start_hp = player_stats[str(m_author)]["hp"]
@@ -231,10 +232,20 @@ async def fight(ctx, type="basic"):
         error_info = create_embed_green("You need to create a character first!\nDo this by typing ::set followed by a legend\nThere are three legends:\n1. Burrito Cat\n2. Polite Cat\n3.Fortnite Cat")
         await ctx.send(embed=error_info)
 
+def enemy_turn(channel):
+    global enemy_hp, player_hp, enemy_name
+    if enemy_hp > 0:   
+        damage = random.randint(enemy_attack/2, enemy_attack)
+        player_hp -= damage
+
+        fight_info = create_embed_red(f"The {enemy_name} attacked and dealt {damage} damage, you are now on {player_hp} hp")
+        await channel.send(embed=fight_info)
+
 @client.event
 async def on_message(message):
-    global enemy_hp, enemy_attack, enemy_defense,enemy_CanStopPoison, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison, fight_occuring, m_author, enemy_name, enemy_poisoned, shop_inUse, enemy_coinDrop
-    channel = message.channel
+    global enemy_hp, enemy_attack, enemy_defense,enemy_CanStopPoison,enemy_CanPoisonPlayer, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison, fight_occuring, m_author, enemy_name, enemy_poisoned, shop_inUse, enemy_coinDrop
+    
+    channel = message.channel            
 
     #only takes messages if a user has actived the fight command
     if fight_occuring == True:
@@ -251,13 +262,7 @@ async def on_message(message):
                 await channel.send(embed=fight_info)
 
                 #enemies attack
-                #checks if enemy can attack, if the enemies hp is lower than 0 they would be dead
-                if enemy_hp > 0:
-                    damage = random.randint(enemy_attack/2, enemy_attack)
-                    player_hp -= damage
-
-                    fight_info = create_embed_red(f"The {enemy_name} attacked you and dealt {damage} damage, you are now on {player_hp} hp")
-                    await channel.send(embed=fight_info)
+                enemy_turn(channel)
 
             #if the user typed potion
             elif message.content == "potion":
@@ -276,12 +281,7 @@ async def on_message(message):
                     await channel.send(embed=fight_info)
                         
                     #enemy attacks
-                    if enemy_hp > 0:   
-                        damage = random.randint(enemy_attack/2, enemy_attack)
-                        player_hp -= damage
-
-                        fight_info = create_embed_red(f"The {enemy_name} attacked and dealt {damage} damage, you are now on {player_hp} hp")
-                        await channel.send(embed=fight_info)
+                    enemy_turn(channel)
                     
                 else:
                     fight_info = create_embed_blue("You don't have any potions left")
@@ -316,12 +316,7 @@ async def on_message(message):
                     await channel.send(embed=poisonEmbed)
 
                     #enemy attack
-                    if enemy_hp > 0:   
-                        damage = random.randint(enemy_attack/2, enemy_attack)
-                        player_hp -= damage
-
-                        fight_info = create_embed_red(f"The {enemy_name} attacked and dealt {damage} damage, you are now on {player_hp} hp")
-                        await channel.send(embed=fight_info)
+                    enemy_turn(channel)
 
             #if user types help                        
             elif message.content == "help":
