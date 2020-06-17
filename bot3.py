@@ -234,11 +234,11 @@ async def fight(ctx, type="basic"):
 
 def enemy_turn():
     global enemy_hp, player_hp, enemy_name, enemy_attack
-    if enemy_hp > 0:   
-        damage = random.randint(enemy_attack/2, enemy_attack)
-        player_hp -= damage
 
-        return create_embed_red(f"The {enemy_name} attacked and dealt {damage} damage, you are now on {player_hp} hp")
+    damage = random.randint(enemy_attack/2, enemy_attack)
+    player_hp -= damage
+
+    return create_embed_red(f"The {enemy_name} attacked and dealt {damage} damage, you are now on {player_hp} hp")
 
 @client.event
 async def on_message(message):
@@ -261,8 +261,9 @@ async def on_message(message):
                 await channel.send(embed=fight_info)
 
                 #enemies attack
-                turn = enemy_turn()
-                await channel.send(embed=turn)
+                if enemy_hp>0:
+                    turn = enemy_turn()
+                    await channel.send(embed=turn)
 
             #if the user typed potion
             elif message.content == "potion":
@@ -281,8 +282,9 @@ async def on_message(message):
                     await channel.send(embed=fight_info)
                         
                     #enemy attacks
-                    turn = enemy_turn()
-                    await channel.send(embed=turn)
+                    if enemy_hp>0:
+                        turn = enemy_turn()
+                        await channel.send(embed=turn)
                     
                 else:
                     fight_info = create_embed_blue("You don't have any potions left")
@@ -317,8 +319,9 @@ async def on_message(message):
                     await channel.send(embed=poisonEmbed)
 
                     #enemy attack
-                    turn = enemy_turn()
-                    await channel.send(embed=turn)
+                    if enemy_hp>0:
+                        turn = enemy_turn()
+                        await channel.send(embed=turn)
 
             #if user types help                        
             elif message.content == "help":
