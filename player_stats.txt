@@ -1,5 +1,5 @@
 {
-'CleanlyWolf':{'lvl': 4, 'xp': 70, 'hp': 150, 'hp multiplier': 1, 'defense': 65, 'attack': 80, 'coins': 35, 'health potions': 2, 'poison potions': 1, 'legend': 'burrito cat'},
+'CleanlyWolf':{'lvl': 4, 'xp': 80, 'hp': 150, 'hp multiplier': 1, 'defense': 65, 'attack': 80, 'coins': 50, 'health potions': 2, 'poison potions': 0, 'legend': 'burrito cat'},
 'ZOD14C':{'lvl': 1, 'xp': 0, 'hp': 150, 'hp multiplier': 1, 'defense': 80, 'coins': 0, 'health potions': 0, 'poison potions': 2, 'legend': 'fortnite cat', 'attack': 65},
 'Elizabeth':{'lvl': 2, 'xp': 10, 'hp': 150, 'hp multiplier': 1, 'defense': 100, 'attack': 10, 'coins': 5, 'health potions': 0, 'poison potions': 2, 'legend': 'polite cat'},
 'Theblockbuster1':{'lvl': 2, 'xp': 10, 'hp': 150, 'hp multiplier': 1, 'defense': 65, 'attack': 80, 'coins': 0, 'health potions': 0, 'poison potions': 2, 'legend': 'burrito cat'},

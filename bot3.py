@@ -25,7 +25,8 @@ enemy_lvl1 = {
     "attack":10,
     "defense":10,
     "coin drop":5,
-    "can stop poison":False
+    "can stop poison":False,
+    "can poison player":False
 }
 
 enemy_lvl2 = {
@@ -34,7 +35,8 @@ enemy_lvl2 = {
     "attack":70,
     "defense":40,
     "coin drop":15,
-    "can stop poison":True
+    "can stop poison":True,
+    "can poison player":True
 
 }
 
@@ -248,12 +250,6 @@ async def on_message(message):
                 fight_info = create_embed_blue(f"You attacked the {enemy_name} and dealt {damage} damage\nthe enemy is now on {enemy_hp} health")                   
                 await channel.send(embed=fight_info)
 
-                if enemy_poisoned:
-                    poisonDamage = random.randint(10, 20)
-                    enemy_hp -= poisonDamage
-                    poisonEmbed = create_embed_blue(f"Poisoned {enemy_name} and dealt {poisonDamage} damage\nThe enemy is now on {enemy_hp}")
-                    await channel.send(embed=poisonEmbed)
-
                 #enemies attack
                 #checks if enemy can attack, if the enemies hp is lower than 0 they would be dead
                 if enemy_hp > 0:
@@ -305,7 +301,7 @@ async def on_message(message):
             #if user chooses to poison enemy
             elif message.content == "poison":
                 
-                #chekcs if enemy is already poisoned
+                #checks if enemy is already poisoned
                 if enemy_poisoned:
                     #informs user and skips enemy attack
                     infoEmbed = create_embed_blue("The enemy is already poisoned") 
