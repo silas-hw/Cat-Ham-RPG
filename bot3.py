@@ -236,14 +236,18 @@ async def fight(ctx, type="basic"):
 def enemy_turn():
     global enemy_hp, player_hp, enemy_name, enemy_attack, enemy_CanPoisonPlayer, player_poisoned
 
+    skip = False
     if enemy_CanPoisonPlayer and player_poisoned == False:
-        if random.randint(1,10) == 2:
+        if random.randint(2,3) == 2:
             player_poisoned = True
+            skip = True
 
-    damage = random.randint(enemy_attack/2, enemy_attack)
-    player_hp -= damage
+            return create_embed_red("Enemy poisoned you")
+    if skip == False:
+        damage = random.randint(enemy_attack/2, enemy_attack)
+        player_hp -= damage
 
-    return create_embed_red(f"The {enemy_name} attacked and dealt {damage} damage, you are now on {player_hp} hp")
+        return create_embed_red(f"The {enemy_name} attacked and dealt {damage} damage, you are now on {player_hp} hp")
 
 @client.event
 async def on_message(message):
@@ -311,15 +315,30 @@ async def on_message(message):
                     enemy_hp -= poisonDamage
                     poisonEmbed = create_embed_blue(f"Poisoned {enemy_name} and dealt {poisonDamage} damage\nThe enemy is now on {enemy_hp}")
                     await channel.send(embed=poisonEmbed)
-            #enemies turm
+            #enemies turn
             if enemy_hp>0 and message.content != "help":
-                turn = enemy_turn()
-                await channel.send(embed=turn)
+                enemyPoisonCheck = False # used to check if the enemy used their turn to poison the enemy. It skips the usual enemy turn if they did so they enemy can't poison and attack at the same time
+                if enemy_CanPoisonPlayer and player_poisoned == False: #only poisons the enemy if the enemy can poison the player and the player is not already poisoned
+                    if random.randint(2,3) == 2:
+                        player_poisoned = True
+                        enemyPoisonCheck = True
+                        #informs user
+                        poisonEmbed = create_embed_red("Enemy poisoned you")
+                        await channel.send(embed = poisonEmbed)
+            
+                if enemyPoisonCheck == False: #if the enemy didn't user their turn to poison the enemy
+                    damage = random.randint(enemy_attack/2, enemy_attack) #sets damage value to a random integer between half the enemies attack stat and the enemies attack stat
+                    player_hp -= damage
+
+                    attackEmbed = create_embed_red(f"The {enemy_name} attacked and dealt {damage} damage, you are now on {player_hp} hp")
+                    await channel.send(embed = attackEmbed)
+
             #if player is poisoned
-            if player_poisoned and message.content != "help":
+            if player_poisoned == True and message.content != "help":
                 poisonDamage = random.randint(10,20)
                 player_hp -= poisonDamage
                 poisonEmbed = create_embed_red(f"You got poisoned and took {poisonDamage} damage\nYou are now on {player_hp}")
+                await channel.send(embed=poisonEmbed)
 
             #if the enemy is defeated
             if enemy_hp <= 0:
