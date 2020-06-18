@@ -293,23 +293,12 @@ async def on_message(message):
                     infoEmbed = create_embed_blue("The enemy is already poisoned") 
                     await channel.send(embed=infoEmbed)
                 else:
-                    #poisons enemy and takes damage
                     enemy_poisoned = True
            
             #if user types help                        
             elif message.content == "help":
                 fight_info = create_embed_green("potions provide +40 hp\nattack damages the enemy and removes some hp\nafter your attack the enemy gets a chance to attack you")
                 await channel.send(embed=fight_info)
-
-            #enemy turn
-            if enemy_hp>0 and message.content != "help":
-                turn = enemy_turn()
-                await channel.send(embed=turn)
-            
-            if player_poisoned and message.content != "help":
-                poisonDamage = random.randint(10,20)
-                player_hp -= poisonDamage
-                poisonEmbed = create_embed_red(f"You got poisoned and took {poisonDamage} damage\nYou are now on {player_hp}")
             
             #if enemy is poisoned, deal poison damage and inform user
             if enemy_poisoned and player_hp > 0 and message.content != "help": #message.content != "help" stops poison damage from happening if the player types help (doesn't count as a move)
@@ -322,6 +311,15 @@ async def on_message(message):
                     enemy_hp -= poisonDamage
                     poisonEmbed = create_embed_blue(f"Poisoned {enemy_name} and dealt {poisonDamage} damage\nThe enemy is now on {enemy_hp}")
                     await channel.send(embed=poisonEmbed)
+            #enemies turm
+            if enemy_hp>0 and message.content != "help":
+                turn = enemy_turn()
+                await channel.send(embed=turn)
+            #if player is poisoned
+            if player_poisoned and message.content != "help":
+                poisonDamage = random.randint(10,20)
+                player_hp -= poisonDamage
+                poisonEmbed = create_embed_red(f"You got poisoned and took {poisonDamage} damage\nYou are now on {player_hp}")
 
             #if the enemy is defeated
             if enemy_hp <= 0:
