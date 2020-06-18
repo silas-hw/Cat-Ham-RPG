@@ -295,16 +295,6 @@ async def on_message(message):
                 else:
                     #poisons enemy and takes damage
                     enemy_poisoned = True
-                    poisonDamage = random.randint(10, 20) #damage is a random number between 10 and 20
-                    enemy_hp -= poisonDamage
-                    player_poison -= 1
-                    poisonEmbed = create_embed_blue(f"Poisoned {enemy_name} and dealt {poisonDamage} damage\nThe enemy is now on {enemy_hp}")
-                    await channel.send(embed=poisonEmbed)
-
-                    #enemy attack
-                    if enemy_hp>0:
-                        turn = enemy_turn()
-                        await channel.send(embed=turn)
            
             #if user types help                        
             elif message.content == "help":
@@ -326,6 +316,7 @@ async def on_message(message):
                 if enemy_CanStopPoison and random.randint(1,10) == 2:
                     enemy_poisoned = False
                     infoEmbed = create_embed_red("Enemy has cured poison!")
+                    await channel.send(embed=infoEmbed)
                 else:
                     poisonDamage = random.randint(10, 20)
                     enemy_hp -= poisonDamage
