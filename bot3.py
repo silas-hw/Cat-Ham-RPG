@@ -54,6 +54,7 @@ def writeTo_player_stats():
 client = commands.Bot(command_prefix = '::')
 fight_occuring = False
 shop_inUse = False
+travellingMerchant_inUse = False
 
 '''
 blue is for player actions
@@ -250,7 +251,7 @@ def enemy_turn():
 possibleFightCommands = ["attack", "potion", "poison", "help"]
 @client.event
 async def on_message(message):
-    global enemy_hp, enemy_attack, enemy_defense,enemy_CanStopPoison,enemy_CanPoisonPlayer, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison,player_poisoned, fight_occuring, m_author, enemy_name, enemy_poisoned, shop_inUse, enemy_coinDrop
+    global enemy_hp, enemy_attack, enemy_defense,enemy_CanStopPoison,enemy_CanPoisonPlayer, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison,player_poisoned, fight_occuring, m_author, enemy_name, enemy_poisoned, shop_inUse, enemy_coinDrop, travellingMerchant_inUse
     
     channel = message.channel            
     MessageContent = message.content.lower() #removes issue with capitilisation
@@ -399,6 +400,11 @@ async def on_message(message):
 
                 infoEmbed = create_embed_green(f"You succesfully purchased a posion potion\nYou now have {player_coins} coins")
                 await channel.send(embed=infoEmbed)
+             #if user does not have enough coins
+            else:
+                #informs the user
+                infoEmbed = create_embed_green("You do not have enough coins")
+                await channel.send(embed=infoEmbed)
 
         elif MessageContent == "info":
             infoEmbed = create_embed_purple("Health Potion - Heals 40hp in battle\nPosion Potion - enemy takes -10 to -20 hp every turn unless poison cure is consumed\nDildo Sword - adds 40 damage to attack")
@@ -409,6 +415,41 @@ async def on_message(message):
 
         player_stats[str(m_author)]["coins"] = player_coins
         writeTo_player_stats()
+    elif travellingMerchant_inUse and message.author.name == m_author:
+        #sets variables
+        player_coins = player_stats[str(m_author)]["coins"]
+
+        if MessageContent == "poison":
+            if player_coins >= 8:
+                player_coins -= 8
+
+                player_stats[str(m_author)]["poison potions"] += 1
+
+                infoEmbed = create_embed_green(f"You succesfully purchased a posion potion\nYou now have {player_coins} coins")
+                await channel.send(embed=infoEmbed)
+            else:
+                infoEmbed = create_embed_green("You do not have enough coins")
+                await channel.send(embed=infoEmbed)
+        elif MessageContent == "health":
+            #checks if user has necessary amount of coins
+            if player_coins >= 5:
+                player_coins -= 5 #removes coins from players coins
+                player_stats[str(m_author)]["health potions"] += 1 #adds potion to player potion
+
+                #informs the user
+                infoEmbed = create_embed_green(f"You succesfully purchased a health potion\nYou now have {player_coins} coins and {player_stats[str(m_author)]['health potions']} health potions")
+                await channel.send(embed=infoEmbed)
+
+            #if user does not have enough coins
+            else:
+                #informs the user
+                infoEmbed = create_embed_green("You do not have enough coins")
+                await channel.send(embed=infoEmbed)
+        elif MessageContent == "exit":
+            travellingMerchant_inUse = False
+
+
+
 
     await client.process_commands(message)
 
@@ -426,6 +467,28 @@ async def shop(ctx):
 
     #goes to the on_message event, allows user to reply and for the code to answer
     shop_inUse = True
+
+@client.command()
+async def merchant(ctx):
+    global travellingMerchant, travellingMerchant_inUse, m_author
+    if travellingMerchant:
+        travellingMerchant_inUse = True
+        m_author = ctx.message.author
+
+        merchant_info = create_embed_purple("**Travelling Merchant:**\nBuy items for cheaper prices!\nHealth potions - 5 coins\nPoison Potions - 8 coins")
+        await ctx.send(embed=merchant_info)
+    else:
+        await ctx.send("There is not currently a travelling merchant!")
+
+@tasks.loop(minutes=30)
+async def merchantLoop():
+    global travellingMerchant
+
+    if random.randint(1,3) == 1:
+        travellingMerchant = True
+
+    else:
+        travellingMerchant = False
 
 @client.command(aliases=["stat", "info", "player"])
 async def stats(ctx):
