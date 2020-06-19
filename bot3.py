@@ -19,27 +19,25 @@ legend_stats = {
     }
 }
 
-enemy_lvl1 = {
-    "name": "Hamlet",
-    "hp": 100,
-    "attack":10,
-    "defense":10,
-    "coin drop":5,
-    "can stop poison":False,
-    "can poison player":False
-}
+class Enemy:
 
-enemy_lvl2 = {
-    "name": "Pickle Rick",
-    "hp": 130,
-    "attack":70,
-    "defense":40,
-    "coin drop":15,
-    "can stop poison":True,
-    "can poison player":True
+    def __init__(self, name, hp, attack, defense, coinDrop, canStopPoison, canPoison):
+        self.name = name
+        self.hp = hp
+        self.attack = attack
+        self.defense = defense
+        self.coinDrop = coinDrop
+        self.canStopPoison = canStopPoison
+        self.canPoison = canPoison
 
-}
+enemy_hamlet = Enemy('hamlet', 100, 10, 10, 5, False, False)
+enemy_gherkin = Enemy('Gherkin', 100, 10, 10, 5, False, False)
 
+enemies_lvl1 = [enemy_hamlet, enemy_gherkin]
+
+enemy_pickleRick = Enemy('Pickle Rick', 130, 70, 40, 15, True, True)
+
+enemies_lvl2 = [enemy_pickleRick]
 
 with open("player_stats.txt", "r") as f:
     player_stats = eval(f.read())
@@ -126,7 +124,7 @@ async def on_command_error(ctx, error):
 
     #if the user tries a command that needs them to create a character to do
     if isinstance(error, KeyError):
-        error_info = create_embed_green("You need to create a character first!\nDo this by typing ::set followed by a legend\nThere are legends:\n1. Burrito Cat\n2. Polite Cat\n3.Fortnite Cat")
+        error_info = create_embed_green("You need to create a character first!\nDo this by typing ::set followed by a legend\nThere are legends:\n1. Burrito Cat\n2. Polite Cat\n3. Fortnite Cat")
         await ctx.send(embed=error_info)
     #if the user tries a command that doesnt exist
     elif isinstance(error, commands.CommandNotFound):
@@ -199,19 +197,19 @@ async def fight(ctx, type="basic"):
         if type == "basic":
             player_lvl = player_stats[str(m_author)]["lvl"]
             if player_lvl <= 2:
-                enemy = enemy_lvl1
+                enemy = random.choice(enemies_lvl1)
             elif player_lvl == 3:
-                enemy = enemy_lvl2
+                enemy = random.choice(enemies_lvl2)
             else:
-                enemy = enemy_lvl2
+                enemy = random.choice(enemies_lvl2)
 
-            enemy_name = enemy["name"]
-            enemy_hp = enemy["hp"]
-            enemy_attack = enemy["attack"]
-            enemy_defense = enemy["defense"]
-            enemy_coinDrop = enemy["coin drop"]
-            enemy_CanStopPoison = enemy["can stop poison"]
-            enemy_CanPoisonPlayer = enemy["can poison player"]
+            enemy_name = enemy.name
+            enemy_hp = enemy.hp
+            enemy_attack = enemy.attack
+            enemy_defense = enemy.defense
+            enemy_coinDrop = enemy.coinDrop
+            enemy_CanStopPoison = enemy.canStopPoison
+            enemy_CanPoisonPlayer = enemy.canPoison
             enemy_poisoned = False
 
             start_hp = player_stats[str(m_author)]["hp"]
@@ -222,7 +220,7 @@ async def fight(ctx, type="basic"):
             player_poison = player_stats[str(m_author)]["poison potions"]
             player_poisoned = False
 
-            fight_info = create_embed_green(f"*fighting a {enemy_name}!*\nyou have {player_potions} health potions,\nyou have {player_poison} poison potions,/ntype attack to attack,type help for more infomation")
+            fight_info = create_embed_green(f"*fighting a {enemy_name}!*\nyou have {player_potions} health potions,\nyou have {player_poison} poison potions,\ntype attack to attack,type help for more infomation")
             await ctx.send(embed=fight_info)
                     
         fight_occuring = True
@@ -255,8 +253,8 @@ async def on_message(message):
     global enemy_hp, enemy_attack, enemy_defense,enemy_CanStopPoison,enemy_CanPoisonPlayer, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison,player_poisoned, fight_occuring, m_author, enemy_name, enemy_poisoned, shop_inUse, enemy_coinDrop
     
     channel = message.channel            
-    MessageContent = message.content.lower() #remoes issue with capitilisation
-    #only takes messages if a user has actived the fight command and the author of the message is the user who activated the fight
+    MessageContent = message.content.lower() #removes issue with capitilisation
+    #only takes messages if a user has actived the fight command and the author of the message is the user who activated the fight and if the message is one of the possible commands
     if fight_occuring == True and message.author.name == m_author and MessageContent in possibleFightCommands:
             
         #if the user typed attack
