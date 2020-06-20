@@ -181,11 +181,27 @@ async def set_legend(ctx, passed_legend="none"):
         infoEmbed = create_embed_green("You need to give a legend you want to set you character to,\nThe legends available are:\n1. Burrito Cat\n2. Fortnite Cat\n3. Polite Cat")
         await ctx.send(embed=infoEmbed)
         
+#class to have variables that can change during battle, such as hp when recieving damage
+#this makes sure that the players max hp isn't changed by taking damage, the instance variables are reset everytime a new fight occurs
+class tempPlayer:
+    def __init__(self, hp, defense, attack, potions, poison):
+        self.hp = hp
+        self.start_hp = hp
+        self.defense = defense
+        self.attack = attack
+        self.potions = potions
+        self.poison = poison
+        self.poisoned = False
+
+#similar to the tempPlayer class but for enemies during battle
+class tempEnemy:
+    def __init__(self, name, hp, attack, defense, coinDrop, canStopPoison, canPoisonPlayer):
+        pass
 
 #fight command
 @client.command()
 async def fight(ctx, type="basic"):
-    global enemy_hp, enemy_attack, enemy_defense,enemy_CanStopPoison,enemy_CanPoisonPlayer, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison,player_poisoned, fight_basic_occuring, m_author, enemy_name, enemy_coinDrop, enemy_poisoned
+    global player, enemy_hp, enemy_attack, enemy_defense,enemy_CanStopPoison,enemy_CanPoisonPlayer, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison, fight_basic_occuring, m_author, enemy_name, enemy_coinDrop, enemy_poisoned
     
     try:
         m_author = ctx.message.author.name
@@ -216,7 +232,7 @@ async def fight(ctx, type="basic"):
             player_attack = player_stats[str(m_author)]["attack"]
             player_potions = player_stats[str(m_author)]["health potions"]
             player_poison = player_stats[str(m_author)]["poison potions"]
-            player_poisoned = False
+            player = tempPlayer(player_hp, player_defense, player_attack, player_potions, player_poison)
 
             fight_info = create_embed_green(f"*fighting a {enemy_name}!*\nyou have {player_potions} health potions,\nyou have {player_poison} poison potions,\ntype attack to attack,type help for more infomation")
             await ctx.send(embed=fight_info)
@@ -230,25 +246,25 @@ async def fight(ctx, type="basic"):
         await ctx.send(embed=error_info)
 
 def enemy_turn():
-    global enemy_hp, player_hp, enemy_name, enemy_attack, enemy_CanPoisonPlayer, player_poisoned
+    global player, enemy_hp, player_hp, enemy_name, enemy_attack, enemy_CanPoisonPlayer
 
     skip = False
-    if enemy_CanPoisonPlayer and player_poisoned == False:
+    if enemy_CanPoisonPlayer and player.poisoned == False:
         if random.randint(2,3) == 2:
-            player_poisoned = True
+            player.poisoned = True
             skip = True
 
             return create_embed_red("Enemy poisoned you")
     if skip == False:
         damage = random.randint(enemy_attack/2, enemy_attack)
-        player_hp -= damage
+        player.hp -= damage
 
         return create_embed_red(f"The {enemy_name} attacked and dealt {damage} damage, you are now on {player_hp} hp")
 
 possibleFightCommands = ["attack", "potion", "poison", "help"]
 @client.event
 async def on_message(message):
-    global enemy_hp, enemy_attack, enemy_defense,enemy_CanStopPoison,enemy_CanPoisonPlayer, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison,player_poisoned, fight_basic_occuring, m_author, enemy_name, enemy_poisoned, shop_inUse, enemy_coinDrop
+    global player, enemy_hp, enemy_attack, enemy_defense,enemy_CanStopPoison,enemy_CanPoisonPlayer, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison, fight_basic_occuring, m_author, enemy_name, enemy_poisoned, shop_inUse, enemy_coinDrop
     
     channel = message.channel            
     MessageContent = message.content.lower() #removes issue with capitilisation
@@ -258,7 +274,7 @@ async def on_message(message):
         #if the user typed attack
         if MessageContent == "attack":
             #players attack
-            damage = random.randint(player_attack/2, player_attack)
+            damage = random.randint(player.attack/2, player.attack)
             enemy_hp -= damage
 
             fight_info = create_embed_blue(f"You attacked the {enemy_name} and dealt {damage} damage\nthe enemy is now on {enemy_hp} health")                   
@@ -267,17 +283,17 @@ async def on_message(message):
         #if the user typed potion
         elif MessageContent == "potion":
             #chekcs if player has potions and takes one away if they do
-            if player_potions > 0:
-                player_potions -= 1
+            if player.potions > 0:
+                player.potions -= 1
 
-                player_hp += 40
+                player.hp += 40
 
                 #if the player healed above the hp they started with, their hp returns to the original value
-                if player_hp > start_hp:
-                    player_hp = start_hp
+                if player.hp > player.start_hp:
+                    player.hp = player.start_hp
 
                 #informs the user what has happened
-                fight_info = create_embed_blue(f"You healed for 40 hp, you are now on {player_hp} hp and have {player_potions} potions left")
+                fight_info = create_embed_blue(f"You healed for 40 hp, you are now on {player.hp} hp and have {player.potions} potions left")
                 await channel.send(embed=fight_info)
                     
             else:
@@ -300,7 +316,7 @@ async def on_message(message):
             await channel.send(embed=fight_info)
             
         #if enemy is poisoned, deal poison damage and inform user
-        if enemy_poisoned and player_hp > 0 and MessageContent != "help": #message.content != "help" stops poison damage from happening if the player types help (doesn't count as a move)
+        if enemy_poisoned and player.hp > 0 and MessageContent != "help": #message.content != "help" stops poison damage from happening if the player types help (doesn't count as a move)
             if enemy_CanStopPoison and random.randint(1,10) == 2:
                 enemy_poisoned = False
                 infoEmbed = create_embed_red("Enemy has cured poison!")
@@ -312,9 +328,9 @@ async def on_message(message):
                 await channel.send(embed=poisonEmbed)
         #enemies turn
         if enemy_hp>0 and MessageContent != "help":
-            enemyPoisonCheck = False # used to check if the enemy used their turn to poison the enemy. It skips the usual enemy turn if they did so they enemy can't poison and attack at the same time
-            if enemy_CanPoisonPlayer and player_poisoned == False and random.randint(1,4) == 2: #only poisons the enemy if the enemy can poison the player and the player is not already poisoned
-                player_poisoned = True
+            enemyPoisonCheck = False # used to check if the enemy used their turn to poison the player. It skips the usual enemy turn if they did so they enemy can't poison and attack at the same time
+            if enemy_CanPoisonPlayer and player.poisoned == False and random.randint(1,4) == 2: #only poisons the enemy if the enemy can poison the player and the player is not already poisoned
+                player.poisoned = True
                 enemyPoisonCheck = True
                 #informs user
                 poisonEmbed = create_embed_red("Enemy poisoned you")
@@ -322,16 +338,16 @@ async def on_message(message):
             
             if enemyPoisonCheck == False: #if the enemy didn't user their turn to poison the enemy
                 damage = random.randint(enemy_attack/2, enemy_attack) #sets damage value to a random integer between half the enemies attack stat and the enemies attack stat
-                player_hp -= damage
+                player.hp -= damage
 
-                attackEmbed = create_embed_red(f"The {enemy_name} attacked and dealt {damage} damage, you are now on {player_hp} hp")
+                attackEmbed = create_embed_red(f"The {enemy_name} attacked and dealt {damage} damage, you are now on {player.hp} hp")
                 await channel.send(embed = attackEmbed)
 
             #if player is poisoned
-            if player_poisoned == True and MessageContent != "help":
+            if player.poisoned == True and MessageContent != "help":
                 poisonDamage = random.randint(10,20)
-                player_hp -= poisonDamage
-                poisonEmbed = create_embed_red(f"You got poisoned and took {poisonDamage} damage\nYou are now on {player_hp}")
+                player.hp -= poisonDamage
+                poisonEmbed = create_embed_red(f"You got poisoned and took {poisonDamage} damage\nYou are now on {player.hp}")
                 await channel.send(embed=poisonEmbed)
 
         #if the enemy is defeated
@@ -356,14 +372,14 @@ async def on_message(message):
             fight_basic_occuring = False
             
         #if the player is defeated
-        if player_hp <= 0:
+        if player.hp <= 0:
             fight_end = create_embed_red(f"You lost to a {enemy_name}.")
             await channel.send(embed=fight_end)
             fight_basic_occuring = False
             
         #writing to file
-        player_stats[str(m_author)]["health potions"] = player_potions
-        player_stats[str(m_author)]["poison potions"] = player_poison
+        player_stats[str(m_author)]["health potions"] = player.potions
+        player_stats[str(m_author)]["poison potions"] = player.poison
         writeTo_player_stats()
     
     #only takes messages if a user has typed the shop command
