@@ -4,6 +4,17 @@ import discord
 from discord.ext import commands, tasks
 
 #stats are out of 100
+class Legend:
+    def __init__(self, name, attack, defense, imageUrl):
+        self.name = name
+        self.attack = attack
+        self.defense = defense
+        self.image = imageUrl
+
+Legend_fortnite = Legend('Fortnite cat', 65, 80,"https://media.discordapp.net/attachments/691647571785023549/721151629956743208/fortnite_cat.png?width=677&height=677")
+Legend_polite = Legend('Polite cat', 10, 100,"https://cdn.discordapp.com/attachments/691647571785023549/721152551701184522/polite_cat.png")
+Legend_burrito = Legend('Burrito cat', 80, 65, "https://cdn.discordapp.com/attachments/691647571785023549/721152284561506354/burrito_cat.png")
+
 legend_stats = {
     "fortnite cat":{
         "attack": 65,
@@ -20,7 +31,6 @@ legend_stats = {
 }
 
 class Enemy:
-
     def __init__(self, name, hp, attack, defense, coinDrop, canStopPoison, canPoison):
         self.name = name
         self.hp = hp
@@ -52,7 +62,7 @@ def writeTo_player_stats():
         f.write("}")
 
 client = commands.Bot(command_prefix = '::')
-fight_occuring = False
+fight_basic_occuring = False
 shop_inUse = False
 
 '''
@@ -134,11 +144,11 @@ async def on_command_error(ctx, error):
 
 #allows player to set legend
 @client.command(aliases=["set", "legend", "sl"])
-async def set_legend(ctx, legend="none"):
+async def set_legend(ctx, passed_legend="none"):
     m_author = ctx.message.author.name #sets variable to the name of the person who sent the command
 
     #if user provided a legend
-    if legend != "none":
+    if passed_legend != "none":
 
         #creates user in player_stats dictionary if they have not already created a character
         if m_author not in player_stats:
@@ -148,47 +158,34 @@ async def set_legend(ctx, legend="none"):
             player_stats[str(m_author)]["hp"] = 150
             player_stats[str(m_author)]["hp multiplier"] = 1
 
-        full_legend = legend+" cat"
-        player_stats[str(m_author)]["defense"] = legend_stats[full_legend]["defense"]
-        player_stats[str(m_author)]["attack"] = legend_stats[full_legend]["attack"]
-
-        def burritoSet():
-            player_stats[str(m_author)]["legend"]= "burrito cat"
-
-            player_embed.set_image(url = "https://cdn.discordapp.com/attachments/691647571785023549/721152284561506354/burrito_cat.png")
-        
-        def fortniteSet():
-            player_stats[str(m_author)]["legend"]= "fortnite cat"
-
-            player_embed.set_image(url = "https://media.discordapp.net/attachments/691647571785023549/721151629956743208/fortnite_cat.png?width=677&height=677")
-        
-        def politeSet():
-            player_stats[str(m_author)]["legend"]= "polite cat" 
-
-            player_embed.set_image(url = "https://cdn.discordapp.com/attachments/691647571785023549/721152551701184522/polite_cat.png")
-
-        set_options = {
-            "burrito":burritoSet,
-            "polite":politeSet,
-            "fortnite":fortniteSet
+        legend_options = {
+            "burrito":Legend_burrito,
+            "polite":Legend_polite,
+            "fortnite":Legend_fortnite
         }
 
-        player_embed = create_embed_green(f"{m_author} is now a {legend} cat!")
-        set_options[legend]()
-        await ctx.send(embed=player_embed)
+        playerLegend = legend_options[passed_legend]
+
+        player_stats[str(m_author)]["defense"] = playerLegend.defense
+        player_stats[str(m_author)]["attack"] = playerLegend.attack
+        player_stats[str(m_author)]["legend"] = playerLegend.name
+
+        infoEmbed = create_embed_green(f"{m_author} is now a {playerLegend.name}")
+        infoEmbed.set_image(url=playerLegend.image)
+        await ctx.send(embed=infoEmbed)
         
         writeTo_player_stats() #calls function to write to player_stats.txt
 
     #if user did not provide a legend
     else:
-        infoEmbed = create_embed_green("You need to give what legend you want to set you character to,\nThe legends available are:\n1. Burrito Cat\n2. Fortnite Cat\n3. Polite Cat")
-        await ctx.send(infoEmbed)
+        infoEmbed = create_embed_green("You need to give a legend you want to set you character to,\nThe legends available are:\n1. Burrito Cat\n2. Fortnite Cat\n3. Polite Cat")
+        await ctx.send(embed=infoEmbed)
         
 
 #fight command
 @client.command()
 async def fight(ctx, type="basic"):
-    global enemy_hp, enemy_attack, enemy_defense,enemy_CanStopPoison,enemy_CanPoisonPlayer, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison,player_poisoned, fight_occuring, m_author, enemy_name, enemy_coinDrop, enemy_poisoned
+    global enemy_hp, enemy_attack, enemy_defense,enemy_CanStopPoison,enemy_CanPoisonPlayer, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison,player_poisoned, fight_basic_occuring, m_author, enemy_name, enemy_coinDrop, enemy_poisoned
     
     try:
         m_author = ctx.message.author.name
@@ -203,6 +200,7 @@ async def fight(ctx, type="basic"):
             else:
                 enemy = random.choice(enemies_lvl2)
 
+            #creates temp variables to be used during the fight
             enemy_name = enemy.name
             enemy_hp = enemy.hp
             enemy_attack = enemy.attack
@@ -223,7 +221,7 @@ async def fight(ctx, type="basic"):
             fight_info = create_embed_green(f"*fighting a {enemy_name}!*\nyou have {player_potions} health potions,\nyou have {player_poison} poison potions,\ntype attack to attack,type help for more infomation")
             await ctx.send(embed=fight_info)
                     
-        fight_occuring = True
+        fight_basic_occuring = True
     
     #if the user does not have a character, error occurs when the account is not in the player_stats dictionary
     except KeyError:
@@ -250,12 +248,12 @@ def enemy_turn():
 possibleFightCommands = ["attack", "potion", "poison", "help"]
 @client.event
 async def on_message(message):
-    global enemy_hp, enemy_attack, enemy_defense,enemy_CanStopPoison,enemy_CanPoisonPlayer, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison,player_poisoned, fight_occuring, m_author, enemy_name, enemy_poisoned, shop_inUse, enemy_coinDrop
+    global enemy_hp, enemy_attack, enemy_defense,enemy_CanStopPoison,enemy_CanPoisonPlayer, start_hp, player_hp, player_defense, player_attack, player_potions,player_poison,player_poisoned, fight_basic_occuring, m_author, enemy_name, enemy_poisoned, shop_inUse, enemy_coinDrop
     
     channel = message.channel            
     MessageContent = message.content.lower() #removes issue with capitilisation
     #only takes messages if a user has actived the fight command and the author of the message is the user who activated the fight and if the message is one of the possible commands
-    if fight_occuring == True and message.author.name == m_author and MessageContent in possibleFightCommands:
+    if fight_basic_occuring == True and message.author.name == m_author and MessageContent in possibleFightCommands:
             
         #if the user typed attack
         if MessageContent == "attack":
@@ -354,14 +352,14 @@ async def on_message(message):
                 levelUp_info = create_embed_green(f"{m_author} is now level {level}!") 
                 await channel.send(embed=levelUp_info)
 
-            #stops messages being sent affecting the code in the fight_occuring if statement
-            fight_occuring = False
+            #stops messages being sent affecting the code in the fight_basic_occuring if statement
+            fight_basic_occuring = False
             
         #if the player is defeated
         if player_hp <= 0:
             fight_end = create_embed_red(f"You lost to a {enemy_name}.")
             await channel.send(embed=fight_end)
-            fight_occuring = False
+            fight_basic_occuring = False
             
         #writing to file
         player_stats[str(m_author)]["health potions"] = player_potions
@@ -413,14 +411,14 @@ async def on_message(message):
     await client.process_commands(message)
 
 #shop command
-@client.command()
+@client.command(aliases=["store", "Shop", "merchant"])
 async def shop(ctx):
     global shop_inUse, m_author
 
     m_author = ctx.message.author.name
 
     shop_info = create_embed_purple("**The shop**:\n Buy consumables, weapons and armor\n These boost your stats\nPurchase them with gold won buy battling (::fight)")
-    shop_inStock = create_embed_purple("**Currently in stock:***\nHealth potion - 10 gold\nPosion Potion - 15 coins\n Dildo Sword (+40 damage) - 30 gold\n\nType the name of the item you want to buy, exit to exit or info for information on the items in stock")
+    shop_inStock = create_embed_purple("**Currently in stock:***\nHealth potion - 10 gold\nPosion Potion - 15 coins\n\nType the name of the item you want to buy, exit to exit or info for information on the items in stock")
     await ctx.send(embed=shop_info)
     await ctx.send(embed=shop_inStock)
 
