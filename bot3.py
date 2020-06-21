@@ -3,37 +3,6 @@ import random
 import discord 
 from discord.ext import commands, tasks
 
-#stats are out of 100
-class Legend:
-    def __init__(self, name, attack, defense, imageUrl):
-        self.name = name
-        self.attack = attack
-        self.defense = defense
-        self.image = imageUrl
-
-Legend_fortnite = Legend('Fortnite cat', 65, 80,"https://media.discordapp.net/attachments/691647571785023549/721151629956743208/fortnite_cat.png?width=677&height=677")
-Legend_polite = Legend('Polite cat', 10, 100,"https://cdn.discordapp.com/attachments/691647571785023549/721152551701184522/polite_cat.png")
-Legend_burrito = Legend('Burrito cat', 80, 65, "https://cdn.discordapp.com/attachments/691647571785023549/721152284561506354/burrito_cat.png")
-
-class Enemy:
-    def __init__(self, name, hp, attack, defense, coinDrop, canStopPoison, canPoison):
-        self.name = name
-        self.hp = hp
-        self.attack = attack
-        self.defense = defense
-        self.coinDrop = coinDrop
-        self.canStopPoison = canStopPoison
-        self.canPoison = canPoison
-
-enemy_hamlet = Enemy('hamlet', 100, 10, 10, 5, False, False)
-enemy_gherkin = Enemy('Gherkin', 100, 10, 10, 5, False, False)
-
-enemies_lvl1 = [enemy_hamlet, enemy_gherkin]
-
-enemy_pickleRick = Enemy('Pickle Rick', 130, 70, 40, 15, True, True)
-
-enemies_lvl2 = [enemy_pickleRick]
-
 with open("player_stats.txt", "r") as f:
     player_stats = eval(f.read())
 
@@ -45,6 +14,29 @@ def writeTo_player_stats():
         for key in player_stats:
             f.write(f"'{key}':{player_stats[key]},\n")
         f.write("}")
+
+#returns what level a player should be based on their xp
+def level_up_check(xp):
+    if xp >= 520:
+        return 10 
+    elif xp >= 400:
+        return 9 
+    elif xp >= 300:
+        return 8 
+    elif xp >= 220:
+        return 7
+    elif xp >= 150:
+        return 6 
+    elif xp >= 90:
+        return 5 
+    elif xp >= 50:
+        return 4 
+    elif xp >= 25:
+        return 3 
+    elif xp >= 10:
+        return 2 
+    else:
+        return 1
 
 client = commands.Bot(command_prefix = '::')
 fight_basic_occuring = False
@@ -85,28 +77,37 @@ def create_embed_purple(text):
     )
     return embed
 
-#returns what level a player should be based on their xp
-def level_up_check(xp):
-    if xp >= 520:
-        return 10 
-    elif xp >= 400:
-        return 9 
-    elif xp >= 300:
-        return 8 
-    elif xp >= 220:
-        return 7
-    elif xp >= 150:
-        return 6 
-    elif xp >= 90:
-        return 5 
-    elif xp >= 50:
-        return 4 
-    elif xp >= 25:
-        return 3 
-    elif xp >= 10:
-        return 2 
-    else:
-        return 1
+#stats are out of 100
+class Legend:
+    def __init__(self, name, attack, defense, imageUrl):
+        self.name = name
+        self.attack = attack
+        self.defense = defense
+        self.image = imageUrl
+
+Legend_fortnite = Legend('Fortnite cat', 65, 80,"https://media.discordapp.net/attachments/691647571785023549/721151629956743208/fortnite_cat.png?width=677&height=677")
+Legend_polite = Legend('Polite cat', 10, 100,"https://cdn.discordapp.com/attachments/691647571785023549/721152551701184522/polite_cat.png")
+Legend_burrito = Legend('Burrito cat', 80, 65, "https://cdn.discordapp.com/attachments/691647571785023549/721152284561506354/burrito_cat.png")
+
+class Enemy:
+    def __init__(self, name, hp, attack, defense, coinDrop, canStopPoison, canPoison):
+        self.name = name
+        self.hp = hp
+        self.attack = attack
+        self.defense = defense
+        self.coinDrop = coinDrop
+        self.canStopPoison = canStopPoison
+        self.canPoison = canPoison
+
+enemy_hamlet = Enemy('hamlet', 100, 10, 10, 5, False, False)
+enemy_gherkin = Enemy('Gherkin', 100, 10, 10, 5, False, False)
+
+enemies_lvl1 = [enemy_hamlet, enemy_gherkin]
+
+enemy_pickleRick = Enemy('Pickle Rick', 130, 70, 40, 15, True, True)
+
+enemies_lvl2 = [enemy_pickleRick]
+enemies_all = [enemy_hamlet, enemy_gherkin, enemy_pickleRick]
 
 #event that runs when bot is ready
 @client.event
@@ -421,17 +422,37 @@ async def shop(ctx):
     shop_inUse = True
 
 @client.command(aliases=["stat", "info", "player"])
-async def stats(ctx):
-    m_author = ctx.message.author.name
+async def stats(ctx, type="player", enemyName=None):
+    global enemies_all
+    
+    if type == "player":
+        m_author = ctx.message.author.name
 
-    stats = f"**{m_author}'s stats:**"
-    for key in player_stats[str(m_author)]:
-        key_value = player_stats[str(m_author)][key]
+        stats = f"**{m_author}'s stats:**"
+        for key in player_stats[str(m_author)]:
+            key_value = player_stats[str(m_author)][key]
 
-        string = f"\n{key} : {key_value}"
-        stats = stats+string
-        
-    stats_info = create_embed_green(stats)
-    await ctx.send(embed=stats_info)
+            string = f"\n{key} : {key_value}"
+            stats = stats+string
+            
+        stats_info = create_embed_green(stats)
+        await ctx.send(embed=stats_info)
+    elif type == "enemy":
+        if enemyName is None:
+            string = "\n"
+            num = 1
+            for enemy in enemies_all:
+                string += f"{num}. {enemy.name}\n"
+                num += 1
 
+            infoEmbed = create_embed_green(f"Please provide an enemy to see the stats of\nThe enemies to chose from are:\n{string}")
+            await ctx.send(embed=infoEmbed)
+        else:
+            for enemy in enemies_all:
+                if enemy.name == enemyName:
+                    infoEmbed = create_embed_green(f"**{enemy.name}:**\nAttack: {enemy.attack}\nHealth: {enemy.hp}\nDefense: {enemy.defense}\nCan Poison Player: {enemy.canPoison}\nCan Cure Poison: {enemy.canStopPoison}")
+                    await ctx.send(embed=infoEmbed)
+                    return
+            infoEmbed = create_embed_green("Enemy does not exist")
+            await ctx.send(embed=infoEmbed)
 client.run('NzIwMzg5MzI5NzEyNTc4NjUx.XuFRDw.lIf0HtfPZqmvebk9T9Z5MIvM58A')
