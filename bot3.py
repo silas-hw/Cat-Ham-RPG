@@ -15,21 +15,6 @@ Legend_fortnite = Legend('Fortnite cat', 65, 80,"https://media.discordapp.net/at
 Legend_polite = Legend('Polite cat', 10, 100,"https://cdn.discordapp.com/attachments/691647571785023549/721152551701184522/polite_cat.png")
 Legend_burrito = Legend('Burrito cat', 80, 65, "https://cdn.discordapp.com/attachments/691647571785023549/721152284561506354/burrito_cat.png")
 
-legend_stats = {
-    "fortnite cat":{
-        "attack": 65,
-        "defense": 80
-    },
-    "polite cat":{
-        "attack": 10,
-        "defense":100
-    },
-    "burrito cat":{
-        "attack": 80,
-        "defense":65
-    }
-}
-
 class Enemy:
     def __init__(self, name, hp, attack, defense, coinDrop, canStopPoison, canPoison):
         self.name = name
