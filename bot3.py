@@ -455,4 +455,4 @@ async def stats(ctx, type="player", enemyName=None):
                     return
             infoEmbed = create_embed_green("Enemy does not exist")
             await ctx.send(embed=infoEmbed)
-client.run('NzIwMzg5MzI5NzEyNTc4NjUx.XuFRDw.lIf0HtfPZqmvebk9T9Z5MIvM58A')
+client.run(TOKEN)
